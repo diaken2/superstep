@@ -8,7 +8,12 @@ const testSchema = new mongoose.Schema({
       options: [String],
       correctIndex: Number
     }
-  ]
+  ], materialId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Material',
+    default: null
+  }
+  
 });
 
 export default mongoose.model('Test', testSchema);

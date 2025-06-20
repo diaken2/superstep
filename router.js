@@ -163,16 +163,37 @@ router.get('/users/rating', async (req, res) => {
 });
 
 
+router.get('/materials/with-tests', async (req, res) => {
+  try {
+    console.log('sdsd')
+    const materials = await Material.find();
+    const materialsWithTests = await Promise.all(
+      materials.map(async (material) => {
+        const test = await Test.findOne({ materialId: material._id });
+        return {
+          ...material.toObject(),
+          test
+        };
+      })
+    );
+    res.json(materialsWithTests);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+
 
 router.post('/tests', async (req, res) => {
-  const { title, questions } = req.body;
+  const { title, questions, materialId } = req.body;
 
   if (!title || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ message: 'Неверные данные' });
   }
 
   try {
-    const newTest = new Test({ title, questions });
+    const newTest = new Test({ title, questions, materialId });
     await newTest.save();
     await notifyAllUsers('Новый тест готов!', `Вы можете пройти новый тест: ${title}`);
     res.status(201).json(newTest);
@@ -214,8 +235,8 @@ router.get('/materials', async (req, res) => {
 });
 
 router.post('/materials', async (req, res) => {
-  const { title, content } = req.body;
-  const material = new Material({ title, content });
+  const { title, content, pdfUrl } = req.body;
+  const material = new Material({ title, content, pdfUrl });
   await material.save();
    await notifyAllUsers('Новый обучающий материал!', `Добавлен новый материал: ${material.title}`);
   res.status(201).json(material);
@@ -241,7 +262,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Удалить тест по ID
-router.delete('/tests/:id', async (req, res) => {
+router.post('/tests/:id', async (req, res) => {
   console.log(req.body)
   try {
     const deleted = await Test.findByIdAndDelete(req.params.id);
@@ -252,7 +273,7 @@ router.delete('/tests/:id', async (req, res) => {
   }
 });
 
-router.delete('/materials/:id', async (req, res) => {
+router.post('/materials/:id', async (req, res) => {
   console.log(req.body)
   try {
     const deleted = await Material.findByIdAndDelete(req.params.id);
